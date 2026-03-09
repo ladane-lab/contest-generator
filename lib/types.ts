@@ -68,11 +68,10 @@ export interface LeaderboardEntry {
 
 export type Language = 'python' | 'cpp' | 'c' | 'java';
 
-export const LANGUAGE_CONFIG: Record<Language, { label: string; pistonName: string; pistonVersion: string; monacoLang: string; template: string }> = {
+export const LANGUAGE_CONFIG: Record<Language, { label: string; judge0Id: number; monacoLang: string; template: string }> = {
   python: {
     label: 'Python 3',
-    pistonName: 'python',
-    pistonVersion: '3.10.0',
+    judge0Id: 100, // Python 3.12
     monacoLang: 'python',
     template: `# Python 3
 import sys
@@ -85,9 +84,8 @@ solve()
 `,
   },
   cpp: {
-    label: 'C++17',
-    pistonName: 'c++',
-    pistonVersion: '10.2.0',
+    label: 'C++14',
+    judge0Id: 105, // C++ (GCC 14.1)
     monacoLang: 'cpp',
     template: `#include <bits/stdc++.h>
 using namespace std;
@@ -104,8 +102,7 @@ int main() {
   },
   c: {
     label: 'C',
-    pistonName: 'c',
-    pistonVersion: '10.2.0',
+    judge0Id: 103, // C (GCC 14.1)
     monacoLang: 'c',
     template: `#include <stdio.h>
 #include <stdlib.h>
@@ -119,8 +116,7 @@ int main() {
   },
   java: {
     label: 'Java 17',
-    pistonName: 'java',
-    pistonVersion: '15.0.2',
+    judge0Id: 91, // Java (JDK 17.0.6)
     monacoLang: 'java',
     template: `import java.util.*;
 import java.io.*;

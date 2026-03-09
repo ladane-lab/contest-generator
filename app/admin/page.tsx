@@ -120,9 +120,35 @@ function ContestList({ onNew }: { onNew: () => void }) {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '6px' }}>
                 <h2 style={{ fontSize: '18px', fontWeight: 700 }}>{c.title}</h2>
-                <span style={{ background: c.is_active ? 'var(--green-bg)' : 'var(--bg-tertiary)', color: c.is_active ? 'var(--green)' : 'var(--text-muted)', border: `1px solid ${c.is_active ? 'var(--green)' : 'var(--border)'}`, padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
-                  {c.is_active ? 'Active' : 'Inactive'}
-                </span>
+                {(() => {
+                  const now = Date.now();
+                  const start = new Date(c.start_time).getTime();
+                  const end = new Date(c.end_time).getTime();
+                  let statusText = 'Upcoming';
+                  let statusColor = 'var(--blue)';
+                  let statusBg = 'var(--blue-bg)';
+                  
+                  if (now >= start && now < end) {
+                    statusText = 'Live';
+                    statusColor = 'var(--green)';
+                    statusBg = 'var(--green-bg)';
+                  } else if (now >= end) {
+                    statusText = 'Ended';
+                    statusColor = 'var(--red)';
+                    statusBg = 'var(--red-bg)';
+                  }
+
+                  return (
+                    <span style={{ 
+                      background: statusBg, color: statusColor, 
+                      border: `1px solid ${statusColor}`, 
+                      padding: '2px 10px', borderRadius: '20px', 
+                      fontSize: '12px', fontWeight: 700 
+                    }}>
+                      {statusText}
+                    </span>
+                  );
+                })()}
               </div>
               <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
                 <span>🔗 /contest/<strong style={{ color: 'var(--accent)', fontFamily: 'JetBrains Mono' }}>{c.slug}</strong></span>
@@ -189,7 +215,25 @@ function CreateContest({ onCreated }: { onCreated: () => void }) {
     e.preventDefault();
     setSaving(true); setError('');
     try {
-      const { error: err } = await supabase.from('contests').insert({ ...form, is_active: true });
+      // Append local timezone offset to ensure Postgres stores the exact intended local moment
+      const toLocalISO = (localTzStr: string) => {
+        const d = new Date(localTzStr);
+        const offset = d.getTimezoneOffset();
+        const sign = offset > 0 ? '-' : '+';
+        const absOffset = Math.abs(offset);
+        const hh = String(Math.floor(absOffset / 60)).padStart(2, '0');
+        const mm = String(absOffset % 60).padStart(2, '0');
+        return `${localTzStr}:00${sign}${hh}:${mm}`;
+      };
+
+      const submitForm = {
+        ...form,
+        start_time: toLocalISO(form.start_time),
+        end_time: toLocalISO(form.end_time),
+        is_active: true
+      };
+      
+      const { error: err } = await supabase.from('contests').insert(submitForm);
       if (err) { 
         console.error('Supabase error:', err);
         setError(err.message || 'Database error occurred'); 
@@ -373,9 +417,53 @@ function AddProblemInline({ contestId, onAdded, currentCount }: { contestId: str
                   )}
                 </div>
               ))}
-              <button className="btn btn-ghost btn-sm" onClick={() => setForm(f => ({ ...f, test_cases: [...f.test_cases, { input: '', expected_output: '', is_hidden: true }] }))}>
-                + Add Test Case
-              </button>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setForm(f => ({ ...f, test_cases: [...f.test_cases, { input: '', expected_output: '', is_hidden: true }] }))}>
+                  + Add Test Case
+                </button>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type="file" 
+                    accept=".json" 
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const text = await file.text();
+                        const parsed = JSON.parse(text);
+                        if (Array.isArray(parsed)) {
+                          const newTcs = parsed.map(item => ({
+                            input: String(item.input || ''),
+                            expected_output: String(item.expected_output || ''),
+                            is_hidden: item.is_hidden !== undefined ? !!item.is_hidden : true
+                          })).filter(tc => tc.input && tc.expected_output);
+                          
+                          if (newTcs.length > 0) {
+                            setForm(f => {
+                              const current = f.test_cases;
+                              const isDefaultEmpty = current.length === 1 && !current[0].input && !current[0].expected_output;
+                              return { ...f, test_cases: isDefaultEmpty ? newTcs : [...current, ...newTcs] };
+                            });
+                            alert(`Successfully imported ${newTcs.length} test cases!`);
+                          } else {
+                            alert('No valid test cases found in JSON. Format should be: [{ "input": "...", "expected_output": "...", "is_hidden": true }]');
+                          }
+                        } else {
+                          alert('JSON must be an array of test case objects.');
+                        }
+                      } catch (err) {
+                        alert('Invalid JSON file.');
+                      }
+                      e.target.value = '';
+                    }}
+                    style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%' }}
+                    title="Upload JSON file with test cases"
+                  />
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ pointerEvents: 'none' }}>
+                    📁 Bulk Import (.json)
+                  </button>
+                </div>
+              </div>
             </div>
 
             {error && <div className="result-box error">{error}</div>}

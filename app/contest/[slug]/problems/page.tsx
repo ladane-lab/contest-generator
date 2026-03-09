@@ -24,6 +24,7 @@ export default function ProblemsPage() {
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
   const [timeLeft, setTimeLeft] = useState('');
   const [isExpired, setIsExpired] = useState(false);
+  const [isLive, setIsLive] = useState(false);
   const [isDanger, setIsDanger] = useState(false);
 
   const [language, setLanguage] = useState<Language>('cpp');
@@ -78,11 +79,27 @@ export default function ProblemsPage() {
   useEffect(() => {
     if (!contest) return;
     const tick = () => {
+      const now = Date.now();
+      const start = new Date(contest.start_time).getTime();
       const end = new Date(contest.end_time).getTime();
-      const diff = end - Date.now();
+      
+      if (now < start) {
+        setIsLive(false);
+        const diff = start - now;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        setTimeLeft(`Starts in ${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+        setIsDanger(false);
+        return;
+      }
+
+      setIsLive(true);
+      const diff = end - now;
       if (diff <= 0) {
         setTimeLeft('0:00:00');
         setIsExpired(true);
+        setIsLive(false);
         if (!autoSubmitted.current) {
           autoSubmitted.current = true;
         }
@@ -131,14 +148,15 @@ export default function ProblemsPage() {
   };
 
   async function handleRun() {
-    if (!selectedProblem || isExpired) return;
+    const pid = participantId || JSON.parse(localStorage.getItem(`participant_${slug}`) || '{}').id;
+    if (!selectedProblem || isExpired || !isLive || !pid) return;
     setRunning(true);
     setRunResult(null);
     try {
       const res = await fetch('/api/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participant_id: participantId, problem_id: selectedProblem.id, language, code, mode: 'run' }),
+        body: JSON.stringify({ participant_id: pid, problem_id: selectedProblem.id, language, code, mode: 'run' }),
       });
       setRunResult(await res.json());
     } catch { setRunResult({ verdict: 'error', output: 'Network error' }); }
@@ -146,14 +164,15 @@ export default function ProblemsPage() {
   }
 
   async function handleSubmit() {
-    if (!selectedProblem || isExpired || !participantId) return;
+    const pid = participantId || JSON.parse(localStorage.getItem(`participant_${slug}`) || '{}').id;
+    if (!selectedProblem || isExpired || !isLive || !pid) return;
     setSubmitting(true);
     setSubmitResult(null);
     try {
       const res = await fetch('/api/judge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participant_id: participantId, problem_id: selectedProblem.id, language, code, mode: 'submit' }),
+        body: JSON.stringify({ participant_id: pid, problem_id: selectedProblem.id, language, code, mode: 'submit' }),
       });
       const result = await res.json();
       setSubmitResult(result);

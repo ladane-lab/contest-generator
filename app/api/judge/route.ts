@@ -2,40 +2,59 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { LANGUAGE_CONFIG, Language } from '@/lib/types';
 
-const PISTON_URL = 'https://emkc.org/api/v2/piston/execute';
+const JUDGE0_URL = 'https://ce.judge0.com/submissions?base64_encoded=false&wait=true';
 
-interface PistonResponse {
-  run: { stdout: string; stderr: string; code: number; };
-  compile?: { stdout: string; stderr: string; code: number; };
+interface Judge0Response {
+  stdout: string | null;
+  stderr: string | null;
+  compile_output: string | null;
+  message: string | null;
+  status: { id: number; description: string };
 }
 
 async function runCode(language: Language, code: string, stdin: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const config = LANGUAGE_CONFIG[language];
   const body = {
-    language: config.pistonName,
-    version: config.pistonVersion,
-    files: [{ name: language === 'java' ? 'Main.java' : `solution.${language === 'cpp' ? 'cpp' : language === 'python' ? 'py' : 'c'}`, content: code }],
-    stdin,
-    run_timeout: 5000,
+    source_code: code,
+    language_id: config.judge0Id,
+    stdin: stdin || '',
+    cpu_time_limit: 5.0
   };
 
-  const res = await fetch(PISTON_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(10000),
-  });
+  try {
+    const res = await fetch(JUDGE0_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10000),
+    });
 
-  const data: PistonResponse = await res.json();
-  
-  if (data.compile && data.compile.code !== 0) {
-    return { stdout: '', stderr: data.compile.stderr || data.compile.stdout, exitCode: data.compile.code };
+    if (!res.ok) {
+      return { stdout: '', stderr: `Judge Error: API returned ${res.status}`, exitCode: 1 };
+    }
+
+    const data: Judge0Response = await res.json();
+    
+    if (data.status.id === 6 || data.compile_output) {
+      return { stdout: '', stderr: data.compile_output || 'Compilation Error', exitCode: 1 };
+    }
+    
+    const isSuccess = data.status.id === 3;
+    return { 
+      stdout: data.stdout || '', 
+      stderr: data.stderr || data.message || (!isSuccess ? data.status.description : ''), 
+      exitCode: isSuccess ? 0 : 1 
+    };
+  } catch (err: any) {
+    return { stdout: '', stderr: `Judge Network Error: ${err.message}`, exitCode: 1 };
   }
-  return { stdout: data.run.stdout || '', stderr: data.run.stderr || '', exitCode: data.run.code };
 }
 
 function normalizeOutput(s: string): string {
-  return s.replace(/\r\n/g, '\n').trim();
+  if (!s) return '';
+  // Replace all sequences of whitespace (spaces, tabs, newlines, carriage returns) 
+  // with a single space, and trim the ends. This allows bulletproof token matching.
+  return s.replace(/\s+/g, ' ').trim();
 }
 
 export async function POST(req: NextRequest) {
@@ -109,17 +128,20 @@ export async function POST(req: NextRequest) {
       const expected = normalizeOutput(tc.expected_output);
       if (got !== expected) {
         verdict = 'WA';
-        if (!tc.is_hidden) failOutput = `Expected:\n${expected}\n\nGot:\n${got}`;
+        failOutput = `Input:\n${tc.input}\n\nExpected:\n${expected}\n\nGot:\n${got}`;
         break;
       }
       passedCount++;
     }
 
-    const score = verdict === 'AC' ? problem.points : 0;
+    // Partial scoring based on passed test cases
+    const score = allCases.length > 0
+      ? Math.floor((passedCount / allCases.length) * problem.points)
+      : (verdict === 'AC' ? problem.points : 0);
 
     // Save submission
     if (participant_id) {
-      await supabase.from('submissions').insert({
+      const { error: dbError } = await supabase.from('submissions').insert({
         participant_id,
         problem_id,
         language,
@@ -128,6 +150,9 @@ export async function POST(req: NextRequest) {
         score,
         runtime_ms: Math.round(totalRuntime / Math.max(allCases.length, 1)),
       });
+      if (dbError) {
+        console.error('Failed to save submission to database:', dbError);
+      }
     }
 
     return NextResponse.json({

@@ -16,6 +16,7 @@ export default function ContestJoinPage() {
   const [name, setName] = useState('');
   const [college, setCollege] = useState('');
   const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState('');
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [contestStatus, setContestStatus] = useState<'upcoming' | 'live' | 'ended'>('upcoming');
 
@@ -73,13 +74,14 @@ export default function ContestJoinPage() {
     e.preventDefault();
     if (!name.trim() || !college.trim()) return;
     setJoining(true);
+    setJoinError('');
     const { data, error } = await supabase
       .from('participants')
       .insert({ contest_id: contest!.id, name: name.trim(), college: college.trim() })
       .select()
       .single();
     if (error || !data) {
-      setError('Failed to join. Please try again.');
+      setJoinError('Registration failed: ' + (error?.message || 'Network error'));
       setJoining(false);
       return;
     }
@@ -159,6 +161,11 @@ export default function ContestJoinPage() {
                   <span>💡</span>
                   <span>Languages allowed: <strong style={{ color: 'var(--text-primary)' }}>Python 3, C++17, C, Java 17</strong></span>
                 </div>
+                {joinError && (
+                  <div style={{ background: 'var(--red-bg)', color: 'var(--red)', padding: '10px 14px', borderRadius: 'var(--radius-sm)', fontSize: '14px', fontWeight: 600 }}>
+                    {joinError}
+                  </div>
+                )}
                 <button type="submit" className="btn btn-primary btn-lg" disabled={joining} style={{ width: '100%' }}>
                   {joining ? <><span className="spinner" /> Joining...</> : 'Join Contest →'}
                 </button>

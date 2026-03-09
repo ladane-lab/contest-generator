@@ -19,12 +19,17 @@ export default function LeaderboardPage() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   async function fetchLeaderboard(contestId: string) {
-    const res = await fetch(`/api/leaderboard?contest_id=${contestId}`);
-    const data = await res.json();
-    if (data.leaderboard) setEntries(data.leaderboard);
-    if (data.problems) setProblems(data.problems);
-    setLastUpdated(new Date().toLocaleTimeString());
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/leaderboard?contest_id=${contestId}`);
+      const data = await res.json();
+      if (data.leaderboard) setEntries(data.leaderboard);
+      if (data.problems) setProblems(data.problems);
+      setLastUpdated(new Date().toLocaleTimeString());
+    } catch (err) {
+      console.error('Failed to fetch leaderboard:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -172,7 +177,7 @@ export default function LeaderboardPage() {
                           return (
                             <td key={p.id} style={{ textAlign: 'center' }}>
                               {v ? (
-                                <span className={`badge badge-${v.toLowerCase()}`}>{v}</span>
+                                <span className={`badge badge-${v.verdict.toLowerCase()}`}>{v.verdict}</span>
                               ) : (
                                 <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>—</span>
                               )}

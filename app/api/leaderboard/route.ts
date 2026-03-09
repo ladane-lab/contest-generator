@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
   const { data: subs } = await supabase
     .from('submissions')
     .select('participant_id, problem_id, verdict, score, submitted_at, participants(name, college)')
-    .in('problem_id', (problems || []).map((p: { id: string }) => p.id));
+    .in('problem_id', (problems || []).map((p: { id: string }) => p.id))
+    .order('submitted_at', { ascending: true });
 
   if (!subs) return NextResponse.json([]);
 
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   for (const sub of subs) {
     const pid = sub.participant_id;
-    const participant = sub.participants as { name: string; college: string } | null;
+    const participant = sub.participants as unknown as { name: string; college: string } | null;
     if (!participant) continue;
 
     if (!map[pid]) {
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
     const existing = entry.problem_verdicts[sub.problem_id];
 
     // Track best submission per problem
-    if (!existing || (sub.verdict === 'AC' && existing.verdict !== 'AC') || (sub.score > existing.score)) {
+    if (!existing || sub.score > existing.score) {
       const wasAC = existing?.verdict === 'AC';
       const nowAC = sub.verdict === 'AC';
 
@@ -59,11 +60,10 @@ export async function GET(req: NextRequest) {
       if (wasAC && !nowAC) entry.problems_solved--;
 
       entry.problem_verdicts[sub.problem_id] = { verdict: sub.verdict, score: sub.score };
-
-      if (nowAC) {
-        if (!entry.last_submit_at || sub.submitted_at > entry.last_submit_at) {
-          entry.last_submit_at = sub.submitted_at;
-        }
+      
+      // Update last_submit_at if this submission improved the score
+      if (!entry.last_submit_at || new Date(sub.submitted_at) > new Date(entry.last_submit_at)) {
+         entry.last_submit_at = sub.submitted_at;
       }
     }
   }
