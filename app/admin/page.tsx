@@ -188,9 +188,20 @@ function CreateContest({ onCreated }: { onCreated: () => void }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true); setError('');
-    const { error: err } = await supabase.from('contests').insert({ ...form, is_active: true });
-    if (err) { setError(err.message); setSaving(false); return; }
-    onCreated();
+    try {
+      const { error: err } = await supabase.from('contests').insert({ ...form, is_active: true });
+      if (err) { 
+        console.error('Supabase error:', err);
+        setError(err.message || 'Database error occurred'); 
+        setSaving(false); 
+        return; 
+      }
+      onCreated();
+    } catch (err: any) {
+      console.error('Fetch/Network error:', err);
+      setError(err.message || 'Failed to connect to browser. Is the server running? Check console.');
+      setSaving(false);
+    }
   }
 
   const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
