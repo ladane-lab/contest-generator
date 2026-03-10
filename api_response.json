@@ -1,0 +1,20 @@
+{
+  "leaderboard": [
+    {
+      "participant_id": "786c08b1-cac5-41f0-853b-f4ec4512b54f",
+      "name": "sham deshmukh",
+      "college": "Pccoe",
+      "total_score": 0,
+      "problems_solved": 0,
+      "last_submit_at": null,
+      "problem_verdicts": {}
+    }
+  ],
+  "problems": [
+    {
+      "id": "6d40358d-6048-4fc5-9565-f982ec500857",
+      "title": "Bear and Steady Gene",
+      "points": 100
+    }
+  ]
+}

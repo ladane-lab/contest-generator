@@ -25,9 +25,18 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState('');
   const [tab, setTab] = useState<Tab>('contests');
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('isAdmin') === 'true') {
+      setAuthed(true);
+    }
+  }, []);
+
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (password === 'pccoe_admin_2025') setAuthed(true);
+    if (password === 'pccoe_admin_2025') {
+      setAuthed(true);
+      if (typeof window !== 'undefined') localStorage.setItem('isAdmin', 'true');
+    }
     else setAuthError('Wrong password');
   }
 

@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: { persistSession: false },
+  global: {
+    fetch: (...args) => {
+      const [url, options] = args;
+      return fetch(url, { ...options, cache: 'no-store' });
+    }
+  }
+});
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -9,19 +23,29 @@ export async function GET(req: NextRequest) {
   if (!contestId) return NextResponse.json({ error: 'contest_id required' }, { status: 400 });
 
   // Get all problems for this contest
-  const { data: problems } = await supabase
+  const { data: problems, error: pErr } = await supabase
     .from('problems').select('id, title, points').eq('contest_id', contestId);
+  if (pErr) console.error('PROBLEMS FETCH ERROR:', pErr);
 
   // Get all participants for this contest
-  const { data: participants } = await supabase
+  const { data: participants, error: partErr } = await supabase
     .from('participants').select('id, name, college').eq('contest_id', contestId);
+  if (partErr) console.error('PARTS FETCH ERROR:', partErr);
+  console.log("RAW PARTS FETCH:", participants?.length, partErr);
 
-  // Get best submission per participant per problem
-  const { data: subs } = await supabase
+  const { data: subs, error: sErr } = await supabase
     .from('submissions')
     .select('participant_id, problem_id, verdict, score, submitted_at')
-    .in('problem_id', (problems || []).map((p: { id: string }) => p.id))
     .order('submitted_at', { ascending: true });
+  if (sErr) console.error('SUBS FETCH ERROR:', sErr);
+
+  console.log('DEBUG API leaderboard:', {
+     cid: contestId, 
+     probCount: problems?.length, 
+     partCount: participants?.length, 
+     subCount: subs?.length 
+  });
+
 
   const map: Record<string, {
     participant_id: string; name: string; college: string;
@@ -75,10 +99,26 @@ export async function GET(req: NextRequest) {
   const leaderboard = Object.values(map)
     .sort((a, b) => {
       if (b.total_score !== a.total_score) return b.total_score - a.total_score;
+      if (!a.last_submit_at && !b.last_submit_at) return 0;
       if (!a.last_submit_at) return 1;
       if (!b.last_submit_at) return -1;
       return new Date(a.last_submit_at).getTime() - new Date(b.last_submit_at).getTime();
     });
 
-  return NextResponse.json({ leaderboard, problems: problems || [] });
+  return NextResponse.json(
+    { 
+       leaderboard, 
+       problems: problems || [],
+       __debug: {
+          cid: contestId,
+          partErr,
+          sErr,
+          pErr,
+          probCount: problems?.length, 
+          partCount: participants?.length, 
+          subCount: subs?.length 
+       }
+    },
+    { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' } }
+  );
 }

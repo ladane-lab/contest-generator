@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import { Problem, Contest, Language, LANGUAGE_CONFIG } from '@/lib/types';
@@ -9,13 +9,14 @@ import { Problem, Contest, Language, LANGUAGE_CONFIG } from '@/lib/types';
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false, loading: () => <div style={{ height: 400, background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>Loading editor...</div> });
 
 interface JudgeResult {
-  verdict: string; output?: string; expected?: string;
+  verdict: string; output?: string; expected?: string; input?: string;
   score?: number; passed?: number; total?: number; runtime_ms?: number;
 }
 
 export default function ProblemsPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const slug = params.slug as string;
   const participantId = searchParams.get('pid') || '';
 
@@ -44,6 +45,12 @@ export default function ProblemsPage() {
     async function load() {
       const { data: c } = await supabase.from('contests').select('*').eq('slug', slug).single();
       if (!c) return;
+
+      if (Date.now() < new Date(c.start_time).getTime()) {
+        router.replace(`/contest/${slug}`);
+        return;
+      }
+
       setContest(c);
       const { data: p } = await supabase.from('problems').select('*').eq('contest_id', c.id).order('order_index');
       if (p && p.length > 0) {
@@ -52,7 +59,7 @@ export default function ProblemsPage() {
       }
     }
     load();
-  }, [slug]);
+  }, [slug, router]);
 
   // Load best verdicts for this participant
   useEffect(() => {
@@ -313,8 +320,9 @@ export default function ProblemsPage() {
               <div className={`result-box ${runResult.verdict === 'AC' ? 'ac' : runResult.verdict === 'error' ? 'error' : 'wa'}`}>
                 <strong>Sample Test: {runResult.verdict === 'AC' ? '✅ Passed' : runResult.verdict === 'CE' ? '⚠️ Compile Error' : runResult.verdict === 'error' ? '⚠️ Error' : '❌ Wrong Answer'}</strong>
                 {runResult.runtime_ms != null && <span style={{ marginLeft: 12, fontSize: 12, opacity: 0.8 }}>{runResult.runtime_ms}ms</span>}
-                {runResult.output && <pre>{runResult.output.slice(0, 800)}</pre>}
-                {runResult.expected && runResult.verdict !== 'AC' && <pre style={{ marginTop: 8, opacity: 0.7 }}>Expected: {runResult.expected}</pre>}
+                {runResult.input && runResult.verdict !== 'AC' && <pre style={{ marginTop: 8, opacity: 0.7 }}>Input:\n{runResult.input}</pre>}
+                {runResult.output && <pre style={{ marginTop: 8 }}>{runResult.verdict === 'AC' ? runResult.output.slice(0, 800) : `Got:\n${runResult.output.slice(0, 800)}`}</pre>}
+                {runResult.expected && runResult.verdict !== 'AC' && <pre style={{ marginTop: 8, opacity: 0.7 }}>Expected:\n{runResult.expected}</pre>}
               </div>
             )}
             {submitResult && (

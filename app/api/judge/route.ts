@@ -10,9 +10,10 @@ interface Judge0Response {
   compile_output: string | null;
   message: string | null;
   status: { id: number; description: string };
+  time?: string;
 }
 
-async function runCode(language: Language, code: string, stdin: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+async function runCode(language: Language, code: string, stdin: string, retries = 2): Promise<{ stdout: string; stderr: string; exitCode: number, runtimeMs?: number }> {
   const config = LANGUAGE_CONFIG[language];
   const body = {
     source_code: code,
@@ -26,27 +27,45 @@ async function runCode(language: Language, code: string, stdin: string): Promise
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(15000),
     });
 
+    if (res.status === 429) { // Rate limit
+      if (retries > 0) {
+        await new Promise(r => setTimeout(r, 2000));
+        return runCode(language, code, stdin, retries - 1);
+      }
+      return { stdout: '', stderr: `Judge Error: Rate Limit Exceeded`, exitCode: 1, runtimeMs: 0 };
+    }
+
     if (!res.ok) {
-      return { stdout: '', stderr: `Judge Error: API returned ${res.status}`, exitCode: 1 };
+      if (retries > 0 && res.status >= 500) {
+        await new Promise(r => setTimeout(r, 1000));
+        return runCode(language, code, stdin, retries - 1);
+      }
+      return { stdout: '', stderr: `Judge Error: API returned ${res.status}`, exitCode: 1, runtimeMs: 0 };
     }
 
     const data: Judge0Response = await res.json();
     
     if (data.status.id === 6 || data.compile_output) {
-      return { stdout: '', stderr: data.compile_output || 'Compilation Error', exitCode: 1 };
+      return { stdout: '', stderr: data.compile_output || 'Compilation Error', exitCode: 1, runtimeMs: 0 };
     }
     
     const isSuccess = data.status.id === 3;
+    const runtimeMs = data.time ? Math.round(parseFloat(data.time) * 1000) : 0;
     return { 
       stdout: data.stdout || '', 
       stderr: data.stderr || data.message || (!isSuccess ? data.status.description : ''), 
-      exitCode: isSuccess ? 0 : 1 
+      exitCode: isSuccess ? 0 : 1,
+      runtimeMs
     };
   } catch (err: any) {
-    return { stdout: '', stderr: `Judge Network Error: ${err.message}`, exitCode: 1 };
+    if (retries > 0) {
+      await new Promise(r => setTimeout(r, 2000));
+      return runCode(language, code, stdin, retries - 1);
+    }
+    return { stdout: '', stderr: `Judge Network Error: ${err.message}`, exitCode: 1, runtimeMs: 0 };
   }
 }
 
@@ -78,9 +97,9 @@ export async function POST(req: NextRequest) {
     if (mode === 'run') {
       const start = Date.now();
       const result = await runCode(lang, code, problem.sample_input);
-      const runtime = Date.now() - start;
+      const runtime = result.runtimeMs ?? (Date.now() - start);
       if (result.exitCode !== 0 && result.stderr) {
-        return NextResponse.json({ verdict: 'CE', output: result.stderr, runtime_ms: runtime });
+        return NextResponse.json({ verdict: 'CE', output: result.stderr, runtime_ms: Math.max(0, runtime) });
       }
       const got = normalizeOutput(result.stdout);
       const expected = normalizeOutput(problem.sample_output);
@@ -88,6 +107,7 @@ export async function POST(req: NextRequest) {
         verdict: got === expected ? 'AC' : 'WA',
         output: result.stdout,
         expected: problem.sample_output,
+        input: problem.sample_input,
         runtime_ms: runtime,
       });
     }
@@ -100,7 +120,7 @@ export async function POST(req: NextRequest) {
       .order('is_hidden', { ascending: true });
 
     const allCases = testCases || [];
-    let verdict: 'AC' | 'WA' | 'TLE' | 'RE' | 'CE' = 'AC';
+    let verdict: 'AC' | 'WA' | 'TLE' | 'RE' | 'CE' | 'error' = 'AC';
     let totalRuntime = 0;
     let failOutput = '';
     let passedCount = 0;
@@ -108,10 +128,20 @@ export async function POST(req: NextRequest) {
     for (const tc of allCases) {
       const start = Date.now();
       const result = await runCode(lang, code, tc.input);
-      const runtime = Date.now() - start;
+      const runtime = result.runtimeMs ?? (Date.now() - start);
       totalRuntime += runtime;
 
       if (result.exitCode !== 0 && result.stderr && !result.stdout) {
+        if (result.stderr.includes('Judge Network Error') || result.stderr.includes('Judge Error')) {
+           // If we've already exceeded the time limit, the timeout was expected.
+           if (runtime > problem.time_limit_ms || totalRuntime > problem.time_limit_ms) {
+              verdict = 'TLE';
+           } else {
+              verdict = 'error';
+              failOutput = result.stderr;
+           }
+           break;
+        }
         // CE or RE
         const isCE = result.stderr.toLowerCase().includes('error') && runtime < 500;
         verdict = isCE ? 'CE' : 'RE';
@@ -128,16 +158,29 @@ export async function POST(req: NextRequest) {
       const expected = normalizeOutput(tc.expected_output);
       if (got !== expected) {
         verdict = 'WA';
-        failOutput = `Input:\n${tc.input}\n\nExpected:\n${expected}\n\nGot:\n${got}`;
+        failOutput = `Test Case #${passedCount + 1} Failed\n\nInput:\n${tc.input}\n\nExpected:\n${expected}\n\nGot:\n${got}`;
         break;
       }
       passedCount++;
+      
+      // Delay to avoid hitting Judge0 free tier rate limits (max 50-100/min usually)
+      if (passedCount % 5 === 0) {
+         await new Promise(r => setTimeout(r, 500));
+      }
     }
 
     // Partial scoring based on passed test cases
     const score = allCases.length > 0
       ? Math.floor((passedCount / allCases.length) * problem.points)
       : (verdict === 'AC' ? problem.points : 0);
+
+    if (verdict === 'error') {
+       return NextResponse.json({
+         verdict: 'error',
+         output: failOutput,
+         runtime_ms: totalRuntime
+       });
+    }
 
     // Save submission
     if (participant_id) {

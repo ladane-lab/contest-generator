@@ -18,9 +18,42 @@ export default function LeaderboardPage() {
   const [isLive, setIsLive] = useState(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
+  // Admin View State
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedSub, setSelectedSub] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsAdmin(localStorage.getItem('isAdmin') === 'true');
+    }
+  }, []);
+
+  async function fetchLastSubmission(participantId: string, participantName: string) {
+    if (!isAdmin) return;
+    setSelectedSub({ name: participantName, loading: true });
+    
+    const { data } = await supabase.from('submissions')
+      .select('code, language, verdict, score, submitted_at, problem_id')
+      .eq('participant_id', participantId)
+      .order('submitted_at', { ascending: false })
+      .limit(1);
+      
+    if (data && data.length > 0) {
+      const problemDetails = problems.find(p => p.id === data[0].problem_id);
+      setSelectedSub({ 
+        name: participantName, 
+        ...data[0], 
+        problemTitle: problemDetails?.title || 'Unknown Problem',
+        loading: false 
+      });
+    } else {
+      setSelectedSub({ name: participantName, not_found: true, loading: false });
+    }
+  }
+
   async function fetchLeaderboard(contestId: string) {
     try {
-      const res = await fetch(`/api/leaderboard?contest_id=${contestId}`);
+      const res = await fetch(`/api/leaderboard?contest_id=${contestId}&t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       if (data.leaderboard) setEntries(data.leaderboard);
       if (data.problems) setProblems(data.problems);
@@ -160,7 +193,13 @@ export default function LeaderboardPage() {
                   {entries.map((entry, idx) => {
                     const rank = idx + 1;
                     return (
-                      <tr key={entry.participant_id} className={`rank-${rank}`}>
+                      <tr 
+                        key={entry.participant_id} 
+                        className={`rank-${rank}`}
+                        style={{ cursor: isAdmin ? 'pointer' : 'default', transition: 'background 0.2s' }}
+                        onClick={() => isAdmin ? fetchLastSubmission(entry.participant_id, entry.name) : undefined}
+                        title={isAdmin ? "Click to view their last submitted code" : undefined}
+                      >
                         <td className="rank-cell">
                           {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                         </td>
@@ -196,6 +235,45 @@ export default function LeaderboardPage() {
           </div>
         )}
       </div>
+
+      {/* Admin Code Viewer Modal */}
+      {selectedSub && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(4px)' }} onClick={() => setSelectedSub(null)}>
+          <div style={{ background: 'var(--bg-secondary)', width: '100%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px', border: '1px solid var(--border)', position: 'relative', boxShadow: '0 24px 48px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
+              <div>
+                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '24px' }}>🧑‍💻</span> {selectedSub.name}'s Last Submission
+                </h2>
+                {!selectedSub.loading && !selectedSub.not_found && (
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span>Problem: <strong style={{ color: 'var(--text-primary)' }}>{selectedSub.problemTitle}</strong></span>
+                    <span>Language: <strong style={{ color: 'var(--accent)', fontFamily: 'JetBrains Mono' }}>{selectedSub.language}</strong></span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Verdict: <span className={`badge badge-${selectedSub.verdict.toLowerCase()}`}>{selectedSub.verdict}</span></span>
+                  </div>
+                )}
+              </div>
+              <button className="btn btn-ghost" onClick={() => setSelectedSub(null)}>✕ Close</button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              {selectedSub.loading ? (
+                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
+                  <div className="spinner" style={{ width: 36, height: 36, margin: '0 auto 16px' }} />
+                  Fetching code from database...
+                </div>
+              ) : selectedSub.not_found ? (
+                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
+                  <h3 style={{ fontSize: '18px', marginBottom: '8px', color: 'var(--text-secondary)' }}>No submissions found for this participant.</h3>
+                </div>
+              ) : (
+                <pre style={{ margin: 0, padding: '24px', background: '#0d1117', color: '#e6edf3', borderRadius: '8px', fontSize: '14px', fontFamily: '"JetBrains Mono", Consolas, monospace', overflowX: 'auto', border: '1px solid var(--border)', lineHeight: 1.5 }}>
+                  <code>{selectedSub.code}</code>
+                </pre>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

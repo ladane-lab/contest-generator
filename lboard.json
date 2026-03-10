@@ -1,0 +1,53 @@
+[
+  {
+    "participant_id": "3e24c208-11ad-45f3-b841-0661990e69bc",
+    "name": "deshmukh sham",
+    "college": "PCCOE",
+    "total_score": 100,
+    "problems_solved": 1,
+    "last_submit_at": "2026-03-10T08:30:02.62518+00:00",
+    "problem_verdicts": {
+      "6d40358d-6048-4fc5-9565-f982ec500857": {
+        "verdict": "AC",
+        "score": 100
+      }
+    }
+  },
+  {
+    "participant_id": "5343ac6d-af9e-4802-8989-831a9f575d23",
+    "name": "Arjun Sharma",
+    "college": "MIT",
+    "total_score": 100,
+    "problems_solved": 1,
+    "last_submit_at": "2026-03-10T08:30:16.434601+00:00",
+    "problem_verdicts": {
+      "6d40358d-6048-4fc5-9565-f982ec500857": {
+        "verdict": "AC",
+        "score": 100
+      }
+    }
+  },
+  {
+    "participant_id": "63de3e84-141a-4414-b651-020bf245b689",
+    "name": "Akash Maske",
+    "college": "VIT",
+    "total_score": 100,
+    "problems_solved": 1,
+    "last_submit_at": "2026-03-10T08:30:24.538608+00:00",
+    "problem_verdicts": {
+      "6d40358d-6048-4fc5-9565-f982ec500857": {
+        "verdict": "AC",
+        "score": 100
+      }
+    }
+  },
+  {
+    "participant_id": "786c08b1-cac5-41f0-853b-f4ec4512b54f",
+    "name": "sham deshmukh",
+    "college": "Pccoe",
+    "total_score": 0,
+    "problems_solved": 0,
+    "last_submit_at": null,
+    "problem_verdicts": {}
+  }
+]

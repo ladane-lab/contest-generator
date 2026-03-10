@@ -1,0 +1,58 @@
+[
+  {
+    "id": "5646f9fd-bf8a-4026-99fb-b129fd7b7e91",
+    "problem_id": "6d40358d-6048-4fc5-9565-f982ec500857",
+    "input": "8\nGAAATAAA",
+    "expected_output": "5",
+    "is_hidden": false
+  },
+  {
+    "id": "b1a74d4a-3d65-4243-92a0-14d39a8c8bad",
+    "problem_id": "6d40358d-6048-4fc5-9565-f982ec500857",
+    "input": "4\nACTG",
+    "expected_output": "0",
+    "is_hidden": true
+  },
+  {
+    "id": "6db4993b-32be-4e1f-9de2-9d609f5f2fe3",
+    "problem_id": "6d40358d-6048-4fc5-9565-f982ec500857",
+    "input": "8\nAAAAACGT",
+    "expected_output": "2",
+    "is_hidden": true
+  },
+  {
+    "id": "c75fdc82-d8a9-4820-81bd-04ad558c9ef5",
+    "problem_id": "6d40358d-6048-4fc5-9565-f982ec500857",
+    "input": "12\nAAAACCCCGGGG",
+    "expected_output": "6",
+    "is_hidden": true
+  },
+  {
+    "id": "99ec176d-4428-4532-8c6f-7baffda518dc",
+    "problem_id": "6d40358d-6048-4fc5-9565-f982ec500857",
+    "input": "8\nAACCGGTT",
+    "expected_output": "0",
+    "is_hidden": true
+  },
+  {
+    "id": "5f42f549-1689-4312-a03c-ef993a7f0fbf",
+    "problem_id": "6d40358d-6048-4fc5-9565-f982ec500857",
+    "input": "8\nTTTTGGGG",
+    "expected_output": "4",
+    "is_hidden": true
+  },
+  {
+    "id": "454893d8-0072-459c-8ace-4c8890997bf6",
+    "problem_id": "6d40358d-6048-4fc5-9565-f982ec500857",
+    "input": "12\nAAAAAAAACCCC",
+    "expected_output": "6",
+    "is_hidden": true
+  },
+  {
+    "id": "ec49b75b-33d9-446d-ba92-c473c4c4b192",
+    "problem_id": "6d40358d-6048-4fc5-9565-f982ec500857",
+    "input": "16\nAAAACCCCGGGGTTTT",
+    "expected_output": "0",
+    "is_hidden": true
+  }
+]

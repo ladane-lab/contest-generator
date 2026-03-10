@@ -1,0 +1,77 @@
+[
+  {
+    "input": "HARRY\nSALLY",
+    "expected_output": "2",
+    "is_hidden": false
+  },
+  {
+    "input": "AA\nBB",
+    "expected_output": "0",
+    "is_hidden": false
+  },
+  {
+    "input": "SHINCHAN\nNOHARAAA",
+    "expected_output": "3",
+    "is_hidden": false
+  },
+  {
+    "input": "ABCDEF\nFBDAMN",
+    "expected_output": "2",
+    "is_hidden": false
+  },
+  {
+    "input": "OUDFRMYMAW\nAWDEMOMXYZ",
+    "expected_output": "3",
+    "is_hidden": true
+  },
+  {
+    "input": "WEWOUCUIDGCGTRMEZEPXZFEJWISRSBBSMNNN\nOUIZQCGBBPEA",
+    "expected_output": "7",
+    "is_hidden": true
+  },
+  {
+    "input": "A\nA",
+    "expected_output": "1",
+    "is_hidden": true
+  },
+  {
+    "input": "Z\nY",
+    "expected_output": "0",
+    "is_hidden": true
+  },
+  {
+    "input": "MICHAEL\nMICHAEL",
+    "expected_output": "7",
+    "is_hidden": true
+  },
+  {
+    "input": "HACKERRANK\nHACKERRANK",
+    "expected_output": "10",
+    "is_hidden": true
+  },
+  {
+    "input": "ABZDBZ\nBZABZA",
+    "expected_output": "4",
+    "is_hidden": true
+  },
+  {
+    "input": "QWERTYUIOP\nASDFGHJKL",
+    "expected_output": "0",
+    "is_hidden": true
+  },
+  {
+    "input": "FDIFRKVZ\nFKDRVZIF",
+    "expected_output": "5",
+    "is_hidden": true
+  },
+  {
+    "input": "ABCDEFGHIJKLMNOPQRSTUVWXYZ\nZYXWVUTSRQPONMLKJIHGFEDCBA",
+    "expected_output": "1",
+    "is_hidden": true
+  },
+  {
+    "input": "ELGGYVSXWBGNTSWZJBUCHHI\nZUBJWWWGHBYSHVSLGCWTIEBN",
+    "expected_output": "7",
+    "is_hidden": true
+  }
+]

@@ -1,0 +1,58 @@
+{
+  "parts": [
+    {
+      "id": "786c08b1-cac5-41f0-853b-f4ec4512b54f",
+      "name": "sham deshmukh"
+    },
+    {
+      "id": "3e24c208-11ad-45f3-b841-0661990e69bc",
+      "name": "deshmukh sham"
+    },
+    {
+      "id": "5343ac6d-af9e-4802-8989-831a9f575d23",
+      "name": "Arjun Sharma"
+    },
+    {
+      "id": "63de3e84-141a-4414-b651-020bf245b689",
+      "name": "Akash Maske"
+    }
+  ],
+  "subs": [
+    {
+      "participant_id": "3e24c208-11ad-45f3-b841-0661990e69bc",
+      "language": "cpp",
+      "verdict": "AC",
+      "score": 100
+    },
+    {
+      "participant_id": "63de3e84-141a-4414-b651-020bf245b689",
+      "language": "python",
+      "verdict": "AC",
+      "score": 100
+    },
+    {
+      "participant_id": "3e24c208-11ad-45f3-b841-0661990e69bc",
+      "language": "cpp",
+      "verdict": "TLE",
+      "score": 0
+    },
+    {
+      "participant_id": "5343ac6d-af9e-4802-8989-831a9f575d23",
+      "language": "java",
+      "verdict": "WA",
+      "score": 25
+    },
+    {
+      "participant_id": "63de3e84-141a-4414-b651-020bf245b689",
+      "language": "python",
+      "verdict": "TLE",
+      "score": 0
+    },
+    {
+      "participant_id": "5343ac6d-af9e-4802-8989-831a9f575d23",
+      "language": "java",
+      "verdict": "AC",
+      "score": 100
+    }
+  ]
+}
