@@ -26,16 +26,17 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('contests');
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('isAdmin') === 'true') {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('isAdmin') === 'true') {
       setAuthed(true);
     }
   }, []);
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (password === 'pccoe_admin_2025') {
+    const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'pccoe_admin_2025';
+    if (password === correctPassword) {
       setAuthed(true);
-      if (typeof window !== 'undefined') localStorage.setItem('isAdmin', 'true');
+      if (typeof window !== 'undefined') sessionStorage.setItem('isAdmin', 'true');
     }
     else setAuthError('Wrong password');
   }
@@ -55,7 +56,6 @@ export default function AdminPage() {
             {authError && <p style={{ color: 'var(--red)', fontSize: '13px' }}>{authError}</p>}
             <button type="submit" className="btn btn-primary">Enter Admin Panel</button>
           </form>
-          <p style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>Default: pccoe_admin_2025</p>
         </div>
       </div>
     );

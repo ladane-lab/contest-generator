@@ -24,7 +24,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsAdmin(localStorage.getItem('isAdmin') === 'true');
+      setIsAdmin(sessionStorage.getItem('isAdmin') === 'true');
     }
   }, []);
 
