@@ -33,17 +33,20 @@ export async function GET(req: NextRequest) {
   if (partErr) console.error('PARTS FETCH ERROR:', partErr);
   console.log("RAW PARTS FETCH:", participants?.length, partErr);
 
+  const problemIds = (problems || []).map(p => p.id);
   const { data: subs, error: sErr } = await supabase
     .from('submissions')
     .select('participant_id, problem_id, verdict, score, submitted_at')
+    .in('problem_id', problemIds)
     .order('submitted_at', { ascending: true });
   if (sErr) console.error('SUBS FETCH ERROR:', sErr);
 
   console.log('DEBUG API leaderboard:', {
-     cid: contestId, 
-     probCount: problems?.length, 
-     partCount: participants?.length, 
-     subCount: subs?.length 
+    cid: contestId,
+    probIds: problemIds,
+    probCount: problems?.length,
+    partCount: participants?.length,
+    subCount: subs?.length
   });
 
 
@@ -73,6 +76,12 @@ export async function GET(req: NextRequest) {
     if (!map[pid]) continue; // Fallback if participant was deleted but sub remains
 
     const entry = map[pid];
+
+    // Update last_submit_at for ANY submission (absolute last)
+    if (!entry.last_submit_at || new Date(sub.submitted_at) > new Date(entry.last_submit_at)) {
+      entry.last_submit_at = sub.submitted_at;
+    }
+
     const existing = entry.problem_verdicts[sub.problem_id];
 
     // Track best submission per problem
@@ -88,11 +97,6 @@ export async function GET(req: NextRequest) {
       if (wasAC && !nowAC) entry.problems_solved--;
 
       entry.problem_verdicts[sub.problem_id] = { verdict: sub.verdict, score: sub.score };
-      
-      // Update last_submit_at if this submission improved the score
-      if (!entry.last_submit_at || new Date(sub.submitted_at) > new Date(entry.last_submit_at)) {
-         entry.last_submit_at = sub.submitted_at;
-      }
     }
   }
 
@@ -106,18 +110,18 @@ export async function GET(req: NextRequest) {
     });
 
   return NextResponse.json(
-    { 
-       leaderboard, 
-       problems: problems || [],
-       __debug: {
-          cid: contestId,
-          partErr,
-          sErr,
-          pErr,
-          probCount: problems?.length, 
-          partCount: participants?.length, 
-          subCount: subs?.length 
-       }
+    {
+      leaderboard,
+      problems: problems || [],
+      __debug: {
+        cid: contestId,
+        partErr,
+        sErr,
+        pErr,
+        probCount: problems?.length,
+        partCount: participants?.length,
+        subCount: subs?.length
+      }
     },
     { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate' } }
   );

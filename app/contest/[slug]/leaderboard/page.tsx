@@ -24,27 +24,37 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsAdmin(sessionStorage.getItem('isAdmin') === 'true');
+      setIsAdmin(localStorage.getItem('isAdmin') === 'true' || sessionStorage.getItem('isAdmin') === 'true');
     }
   }, []);
 
-  async function fetchLastSubmission(participantId: string, participantName: string) {
+  async function fetchLastSubmission(participantId: string, participantName: string, problemId?: string) {
     if (!isAdmin) return;
     setSelectedSub({ name: participantName, loading: true });
-    
-    const { data } = await supabase.from('submissions')
+
+    let query = supabase.from('submissions')
       .select('code, language, verdict, score, submitted_at, problem_id')
-      .eq('participant_id', participantId)
+      .eq('participant_id', participantId);
+
+    if (problemId) {
+      query = query.eq('problem_id', problemId);
+    }
+
+    const { data, error } = await query
       .order('submitted_at', { ascending: false })
       .limit(1);
-      
+
+    if (error) {
+      console.error('FETCH SUB ERROR:', error);
+    }
+
     if (data && data.length > 0) {
       const problemDetails = problems.find(p => p.id === data[0].problem_id);
-      setSelectedSub({ 
-        name: participantName, 
-        ...data[0], 
+      setSelectedSub({
+        name: participantName,
+        ...data[0],
         problemTitle: problemDetails?.title || 'Unknown Problem',
-        loading: false 
+        loading: false
       });
     } else {
       setSelectedSub({ name: participantName, not_found: true, loading: false });
@@ -193,17 +203,24 @@ export default function LeaderboardPage() {
                   {entries.map((entry, idx) => {
                     const rank = idx + 1;
                     return (
-                      <tr 
-                        key={entry.participant_id} 
+                      <tr
+                        key={entry.participant_id}
                         className={`rank-${rank}`}
-                        style={{ cursor: isAdmin ? 'pointer' : 'default', transition: 'background 0.2s' }}
-                        onClick={() => isAdmin ? fetchLastSubmission(entry.participant_id, entry.name) : undefined}
-                        title={isAdmin ? "Click to view their last submitted code" : undefined}
+                        style={{ transition: 'background 0.2s' }}
                       >
-                        <td className="rank-cell">
+                        <td
+                          className="rank-cell"
+                          style={{ cursor: isAdmin ? 'pointer' : 'default' }}
+                          onClick={() => isAdmin ? fetchLastSubmission(entry.participant_id, entry.name) : undefined}
+                          title={isAdmin ? "Click to view their absolute last submission" : undefined}
+                        >
                           {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                         </td>
-                        <td>
+                        <td
+                          style={{ cursor: isAdmin ? 'pointer' : 'default' }}
+                          onClick={() => isAdmin ? fetchLastSubmission(entry.participant_id, entry.name) : undefined}
+                          title={isAdmin ? "Click to view their absolute last submission" : undefined}
+                        >
                           <div style={{ fontWeight: 600 }}>{entry.name}</div>
                         </td>
                         <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{entry.college}</td>
@@ -214,7 +231,13 @@ export default function LeaderboardPage() {
                         {problems.map(p => {
                           const v = entry.problem_verdicts[p.id];
                           return (
-                            <td key={p.id} style={{ textAlign: 'center' }}>
+                            <td
+                              key={p.id}
+                              style={{ textAlign: 'center', cursor: isAdmin ? 'pointer' : 'default', transition: 'background 0.2s' }}
+                              className={isAdmin ? 'hover-cell' : ''}
+                              onClick={() => isAdmin ? fetchLastSubmission(entry.participant_id, entry.name, p.id) : undefined}
+                              title={isAdmin ? `Click to view their last submission for ${p.title}` : undefined}
+                            >
                               {v ? (
                                 <span className={`badge badge-${v.verdict.toLowerCase()}`}>{v.verdict}</span>
                               ) : (
@@ -237,43 +260,45 @@ export default function LeaderboardPage() {
       </div>
 
       {/* Admin Code Viewer Modal */}
-      {selectedSub && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(4px)' }} onClick={() => setSelectedSub(null)}>
-          <div style={{ background: 'var(--bg-secondary)', width: '100%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px', border: '1px solid var(--border)', position: 'relative', boxShadow: '0 24px 48px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
-              <div>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '24px' }}>🧑‍💻</span> {selectedSub.name}'s Last Submission
-                </h2>
-                {!selectedSub.loading && !selectedSub.not_found && (
-                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span>Problem: <strong style={{ color: 'var(--text-primary)' }}>{selectedSub.problemTitle}</strong></span>
-                    <span>Language: <strong style={{ color: 'var(--accent)', fontFamily: 'JetBrains Mono' }}>{selectedSub.language}</strong></span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Verdict: <span className={`badge badge-${selectedSub.verdict.toLowerCase()}`}>{selectedSub.verdict}</span></span>
+      {
+        selectedSub && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(4px)' }} onClick={() => setSelectedSub(null)}>
+            <div style={{ background: 'var(--bg-secondary)', width: '100%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px', border: '1px solid var(--border)', position: 'relative', boxShadow: '0 24px 48px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
+                <div>
+                  <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '24px' }}>🧑‍💻</span> {selectedSub.name}'s Last Submission
+                  </h2>
+                  {!selectedSub.loading && !selectedSub.not_found && (
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span>Problem: <strong style={{ color: 'var(--text-primary)' }}>{selectedSub.problemTitle}</strong></span>
+                      <span>Language: <strong style={{ color: 'var(--accent)', fontFamily: 'JetBrains Mono' }}>{selectedSub.language}</strong></span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Verdict: <span className={`badge badge-${selectedSub.verdict.toLowerCase()}`}>{selectedSub.verdict}</span></span>
+                    </div>
+                  )}
+                </div>
+                <button className="btn btn-ghost" onClick={() => setSelectedSub(null)}>✕ Close</button>
+              </div>
+              <div style={{ padding: '24px' }}>
+                {selectedSub.loading ? (
+                  <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
+                    <div className="spinner" style={{ width: 36, height: 36, margin: '0 auto 16px' }} />
+                    Fetching code from database...
                   </div>
+                ) : selectedSub.not_found ? (
+                  <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
+                    <h3 style={{ fontSize: '18px', marginBottom: '8px', color: 'var(--text-secondary)' }}>No submissions found for this participant.</h3>
+                  </div>
+                ) : (
+                  <pre style={{ margin: 0, padding: '24px', background: '#0d1117', color: '#e6edf3', borderRadius: '8px', fontSize: '14px', fontFamily: '"JetBrains Mono", Consolas, monospace', overflowX: 'auto', border: '1px solid var(--border)', lineHeight: 1.5 }}>
+                    <code>{selectedSub.code}</code>
+                  </pre>
                 )}
               </div>
-              <button className="btn btn-ghost" onClick={() => setSelectedSub(null)}>✕ Close</button>
-            </div>
-            <div style={{ padding: '24px' }}>
-              {selectedSub.loading ? (
-                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
-                  <div className="spinner" style={{ width: 36, height: 36, margin: '0 auto 16px' }} />
-                  Fetching code from database...
-                </div>
-              ) : selectedSub.not_found ? (
-                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
-                  <h3 style={{ fontSize: '18px', marginBottom: '8px', color: 'var(--text-secondary)' }}>No submissions found for this participant.</h3>
-                </div>
-              ) : (
-                <pre style={{ margin: 0, padding: '24px', background: '#0d1117', color: '#e6edf3', borderRadius: '8px', fontSize: '14px', fontFamily: '"JetBrains Mono", Consolas, monospace', overflowX: 'auto', border: '1px solid var(--border)', lineHeight: 1.5 }}>
-                  <code>{selectedSub.code}</code>
-                </pre>
-              )}
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

@@ -36,7 +36,10 @@ export default function AdminPage() {
     const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'pccoe_admin_2025';
     if (password === correctPassword) {
       setAuthed(true);
-      if (typeof window !== 'undefined') sessionStorage.setItem('isAdmin', 'true');
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('isAdmin', 'true');
+        localStorage.setItem('isAdmin', 'true');
+      }
     }
     else setAuthError('Wrong password');
   }
@@ -136,7 +139,7 @@ function ContestList({ onNew }: { onNew: () => void }) {
                   let statusText = 'Upcoming';
                   let statusColor = 'var(--blue)';
                   let statusBg = 'var(--blue-bg)';
-                  
+
                   if (now >= start && now < end) {
                     statusText = 'Live';
                     statusColor = 'var(--green)';
@@ -148,11 +151,11 @@ function ContestList({ onNew }: { onNew: () => void }) {
                   }
 
                   return (
-                    <span style={{ 
-                      background: statusBg, color: statusColor, 
-                      border: `1px solid ${statusColor}`, 
-                      padding: '2px 10px', borderRadius: '20px', 
-                      fontSize: '12px', fontWeight: 700 
+                    <span style={{
+                      background: statusBg, color: statusColor,
+                      border: `1px solid ${statusColor}`,
+                      padding: '2px 10px', borderRadius: '20px',
+                      fontSize: '12px', fontWeight: 700
                     }}>
                       {statusText}
                     </span>
@@ -241,13 +244,13 @@ function CreateContest({ onCreated }: { onCreated: () => void }) {
         end_time: toLocalISO(form.end_time),
         is_active: true
       };
-      
+
       const { error: err } = await supabase.from('contests').insert(submitForm);
-      if (err) { 
+      if (err) {
         console.error('Supabase error:', err);
-        setError(err.message || 'Database error occurred'); 
-        setSaving(false); 
-        return; 
+        setError(err.message || 'Database error occurred');
+        setSaving(false);
+        return;
       }
       onCreated();
     } catch (err: any) {
@@ -431,9 +434,9 @@ function AddProblemInline({ contestId, onAdded, currentCount }: { contestId: str
                   + Add Test Case
                 </button>
                 <div style={{ position: 'relative' }}>
-                  <input 
-                    type="file" 
-                    accept=".json" 
+                  <input
+                    type="file"
+                    accept=".json"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
@@ -446,7 +449,7 @@ function AddProblemInline({ contestId, onAdded, currentCount }: { contestId: str
                             expected_output: String(item.expected_output || ''),
                             is_hidden: item.is_hidden !== undefined ? !!item.is_hidden : true
                           })).filter(tc => tc.input && tc.expected_output);
-                          
+
                           if (newTcs.length > 0) {
                             setForm(f => {
                               const current = f.test_cases;
