@@ -17,7 +17,7 @@ const DEFAULT_PROBLEM: ProblemInput = {
   sample_input: '', sample_output: '', test_cases: [{ input: '', expected_output: '', is_hidden: false }],
 };
 
-type Tab = 'contests' | 'create';
+type Tab = 'contests' | 'create' | 'settings';
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
@@ -41,43 +41,140 @@ export default function AdminPage() {
         localStorage.setItem('isAdmin', 'true');
       }
     }
-    else setAuthError('Wrong password');
+    else setAuthError('Invalid credentials. Please try again.');
   }
 
   if (!authed) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="card" style={{ width: 360, textAlign: 'center' }}>
-          <div style={{ fontSize: '40px', marginBottom: '16px' }}>🔐</div>
-          <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '20px' }}>Admin Access</h1>
+      <div className="hero bg-animate" style={{ padding: 0, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="floating-symbols">
+          <div className="symbol">{'{ }'}</div>
+          <div className="symbol">{'</>'}</div>
+          <div className="symbol">{'++'}</div>
+          <div className="symbol">{'[ ]'}</div>
+          <div className="symbol">{'#'}</div>
+          <div className="symbol">{'const'}</div>
+          <div className="symbol">{'f()'}</div>
+        </div>
+        <div className="card glass-card" style={{ width: 380, textAlign: 'center', zIndex: 1, padding: '32px', background: 'rgba(255, 255, 255, 0.95)' }}>
+          <div style={{ width: 56, height: 56, background: 'var(--accent-glow)', color: 'var(--accent)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h1 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '4px', color: 'var(--text-primary)' }}>Admin Portal</h1>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Secure dashboard access.</p>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <input
-              type="password" className="input" placeholder="Admin password"
-              value={password} onChange={e => { setPassword(e.target.value); setAuthError(''); }}
-              autoFocus required
-            />
-            {authError && <p style={{ color: 'var(--red)', fontSize: '13px' }}>{authError}</p>}
-            <button type="submit" className="btn btn-primary">Enter Admin Panel</button>
+            <div className="form-group" style={{ textAlign: 'left' }}>
+              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>Administrator Password</label>
+              <input
+                type="password" className="input" placeholder="••••••••"
+                style={{ padding: '10px 14px' }}
+                value={password} onChange={e => { setPassword(e.target.value); setAuthError(''); }}
+                autoFocus required
+              />
+            </div>
+            {authError && <p style={{ color: 'var(--red)', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>{authError}</p>}
+            <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: '4px' }}>
+              Access Dashboard
+            </button>
           </form>
+          <a href="/" style={{ display: 'block', marginTop: '16px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>← Back to Home</a>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
       <nav className="navbar">
-        <div className="navbar-brand"><div className="logo-icon">⚡</div><span>Admin Panel</span></div>
+        <div className="navbar-brand">
+          <div className="logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m13 2-2 10h8L11 22l2-10H5L13 2Z"/></svg>
+          </div>
+          <span>Admin Dashboard</span>
+        </div>
         <div className="flex gap-2">
-          <button className={`btn btn-sm ${tab === 'contests' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setTab('contests')}>My Contests</button>
-          <button className={`btn btn-sm ${tab === 'create' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setTab('create')}>+ New Contest</button>
-          <a href="/" className="btn btn-ghost btn-sm">← Home</a>
+          <button className={`btn btn-sm ${tab === 'contests' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setTab('contests')}>Contests</button>
+          <button className={`btn btn-sm ${tab === 'create' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setTab('create')}>+ Create</button>
+          <button className={`btn btn-sm ${tab === 'settings' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setTab('settings')}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            Settings
+          </button>
+          <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 8px' }} />
+          <a href="/" className="btn btn-ghost btn-sm">Exit</a>
         </div>
       </nav>
 
-      <div className="container" style={{ padding: '32px 24px' }}>
+      <div className="container" style={{ padding: '40px 24px' }}>
         {tab === 'contests' && <ContestList onNew={() => setTab('create')} />}
         {tab === 'create' && <CreateContest onCreated={() => setTab('contests')} />}
+        {tab === 'settings' && <GlobalSettings />}
+      </div>
+    </div>
+  );
+}
+
+function GlobalSettings() {
+  const [eventName, setEventName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
+
+  useEffect(() => {
+    async function fetchSettings() {
+      const { data } = await supabase.from('settings').select('*').eq('key', 'event_name').single();
+      if (data) setEventName(data.value);
+      setLoading(false);
+    }
+    fetchSettings();
+  }, []);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    const { error } = await supabase.from('settings').upsert({ key: 'event_name', value: eventName });
+    if (error) {
+      setMessage({ text: 'Failed to update settings', type: 'error' });
+    } else {
+      setMessage({ text: 'Settings updated successfully!', type: 'success' });
+      setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+    }
+    setSaving(false);
+  }
+
+  if (loading) return <div style={{ textAlign: 'center', padding: 60 }}><div className="spinner" /></div>;
+
+  return (
+    <div style={{ maxWidth: 600 }}>
+      <h1 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '8px' }}>Platform Branding</h1>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '14px' }}>
+        Configure the general branding for the home screen and public portals.
+      </p>
+      <div className="card">
+        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div className="form-group">
+            <label className="form-label">Event Name</label>
+            <input
+              className="input"
+              value={eventName}
+              onChange={e => setEventName(e.target.value)}
+              placeholder="e.g. Decode to Code"
+              required
+            />
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+              This name will be displayed across the platform (Home, Navbar, etc.)
+            </p>
+          </div>
+
+          {message.text && (
+            <div className={`result-box ${message.type === 'success' ? 'ac' : 'error'}`}>
+              {message.text}
+            </div>
+          )}
+
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -87,6 +184,8 @@ function ContestList({ onNew }: { onNew: () => void }) {
   const [contests, setContests] = useState<Contest[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ title: '', start_time: '', end_time: '' });
   const [problems, setProblems] = useState<Record<string, Problem[]>>({});
 
   useEffect(() => {
@@ -109,14 +208,34 @@ function ContestList({ onNew }: { onNew: () => void }) {
     setContests(c => c.filter(x => x.id !== id));
   }
 
+  async function startEditing(c: Contest) {
+    setEditingId(c.id);
+    setEditForm({ title: c.title, start_time: c.start_time.split('.')[0], end_time: c.end_time.split('.')[0] });
+  }
+
+  async function saveEdit(id: string) {
+    const { error } = await supabase.from('contests').update(editForm).eq('id', id);
+    if (error) {
+      alert('Failed to update contest: ' + error.message);
+    } else {
+      setContests(contests.map(c => c.id === id ? { ...c, ...editForm } : c));
+      setEditingId(null);
+    }
+  }
+
   if (loading) return <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}><div className="spinner" style={{ width: 32, height: 32, margin: '0 auto 12px' }} />Loading...</div>;
 
   if (contests.length === 0) return (
-    <div className="card" style={{ textAlign: 'center', padding: '60px' }}>
-      <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏁</div>
-      <h2 style={{ marginBottom: '8px' }}>No contests yet</h2>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Create your first contest to get started.</p>
-      <button className="btn btn-primary" onClick={onNew}>+ Create Contest</button>
+    <div className="card" style={{ textAlign: 'center', padding: '80px 40px', background: 'var(--bg-secondary)', border: '2px dashed var(--border)' }}>
+      <div style={{ width: 80, height: 80, background: 'var(--bg-primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: 'var(--text-muted)' }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+      </div>
+      <h2 style={{ marginBottom: '8px', fontWeight: 800 }}>No Contests Found</h2>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', maxWidth: 300, margin: '0 auto 32px' }}>Start your competition by creating your very first DSA contest arena.</p>
+      <button className="btn btn-primary btn-lg" onClick={onNew}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8 }}><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        Create New Contest
+      </button>
     </div>
   );
 
@@ -124,65 +243,121 @@ function ContestList({ onNew }: { onNew: () => void }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 800 }}>Contest Management</h1>
-        <button className="btn btn-primary btn-sm" onClick={onNew}>+ New Contest</button>
+        <button className="btn btn-primary btn-sm" onClick={onNew}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          New Contest
+        </button>
       </div>
       {contests.map(c => (
         <div key={c.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '6px' }}>
-                <h2 style={{ fontSize: '18px', fontWeight: 700 }}>{c.title}</h2>
-                {(() => {
-                  const now = Date.now();
-                  const start = new Date(c.start_time).getTime();
-                  const end = new Date(c.end_time).getTime();
-                  let statusText = 'Upcoming';
-                  let statusColor = 'var(--blue)';
-                  let statusBg = 'var(--blue-bg)';
+              {editingId === c.id ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Contest Title (Event Name)</label>
+                    <input className="input" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label className="form-label">Start Time</label>
+                      <input type="datetime-local" className="input" value={editForm.start_time} onChange={e => setEditForm({ ...editForm, start_time: e.target.value })} />
+                    </div>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label className="form-label">End Time</label>
+                      <input type="datetime-local" className="input" value={editForm.end_time} onChange={e => setEditForm({ ...editForm, end_time: e.target.value })} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn btn-primary btn-sm" onClick={() => saveEdit(c.id)}>Save Changes</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: 700 }}>{c.title}</h2>
+                    {(() => {
+                      const now = Date.now();
+                      const start = new Date(c.start_time).getTime();
+                      const end = new Date(c.end_time).getTime();
+                      let statusText = 'Upcoming';
+                      let statusColor = 'var(--blue)';
+                      let statusBg = 'var(--blue-bg)';
 
-                  if (now >= start && now < end) {
-                    statusText = 'Live';
-                    statusColor = 'var(--green)';
-                    statusBg = 'var(--green-bg)';
-                  } else if (now >= end) {
-                    statusText = 'Ended';
-                    statusColor = 'var(--red)';
-                    statusBg = 'var(--red-bg)';
-                  }
+                      if (now >= start && now < end) {
+                        statusText = 'Live';
+                        statusColor = 'var(--green)';
+                        statusBg = 'var(--green-bg)';
+                      } else if (now >= end) {
+                        statusText = 'Ended';
+                        statusColor = 'var(--red)';
+                        statusBg = 'var(--red-bg)';
+                      }
 
-                  return (
-                    <span style={{
-                      background: statusBg, color: statusColor,
-                      border: `1px solid ${statusColor}`,
-                      padding: '2px 10px', borderRadius: '20px',
-                      fontSize: '12px', fontWeight: 700
-                    }}>
-                      {statusText}
-                    </span>
-                  );
-                })()}
-              </div>
-              <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
-                <span>🔗 /contest/<strong style={{ color: 'var(--accent)', fontFamily: 'JetBrains Mono' }}>{c.slug}</strong></span>
-                <span>📅 {new Date(c.start_time).toLocaleString()}</span>
-                <span>⏰ ends {new Date(c.end_time).toLocaleString()}</span>
-              </div>
+                      return (
+                        <span style={{
+                          background: statusBg, color: statusColor,
+                          border: `1px solid ${statusColor}`,
+                          padding: '2px 10px', borderRadius: '20px',
+                          fontSize: '12px', fontWeight: 700
+                        }}>
+                          {statusText}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                      <span>{new Date(c.start_time).toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <span>ends {new Date(c.end_time).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-            <div className="flex gap-2" style={{ flexShrink: 0 }}>
-              <a href={`/contest/${c.slug}`} target="_blank" className="btn btn-ghost btn-sm">Open</a>
-              <a href={`/contest/${c.slug}/leaderboard`} target="_blank" className="btn btn-ghost btn-sm">🏆 Board</a>
-              <button className="btn btn-ghost btn-sm" onClick={() => toggleExpand(c.id)}>{expandedId === c.id ? '▲' : '▼'} Problems</button>
-              <button className="btn btn-danger btn-sm" onClick={() => deleteContest(c.id)}>Delete</button>
-            </div>
+            {editingId !== c.id && (
+              <div className="flex gap-2" style={{ flexShrink: 0 }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => startEditing(c)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Edit
+                </button>
+                <a href={`/contest/${c.slug}`} target="_blank" className="btn btn-ghost btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                  Open
+                </a>
+                <a href={`/contest/${c.slug}/leaderboard`} target="_blank" className="btn btn-ghost btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                  Board
+                </a>
+                <button className="btn btn-ghost btn-sm" onClick={() => toggleExpand(c.id)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, transform: expandedId === c.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="m6 9 6 6 6-6"/></svg>
+                  Problems
+                </button>
+                <button className="btn btn-danger btn-sm" onClick={() => deleteContest(c.id)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Share link */}
-          <div style={{ borderTop: '1px solid var(--border)', padding: '12px 24px', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Share link:</span>
-            <code style={{ flex: 1, fontFamily: 'JetBrains Mono', fontSize: '13px', color: 'var(--accent)' }}>
+          <div style={{ borderTop: '1px solid var(--border)', padding: '14px 24px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: 'var(--bg-primary)', color: 'var(--accent)', width: 28, height: 28, borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <code style={{ flex: 1, fontFamily: 'JetBrains Mono', fontSize: '13px', color: 'var(--text-secondary)' }}>
               {typeof window !== 'undefined' ? `${window.location.origin}/contest/${c.slug}` : `/contest/${c.slug}`}
             </code>
-            <button className="btn btn-ghost btn-sm" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/contest/${c.slug}`)}>Copy</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/contest/${c.slug}`)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              Copy
+            </button>
           </div>
 
           {/* Problems list */}
@@ -352,8 +527,11 @@ function AddProblemInline({ contestId, onAdded, currentCount }: { contestId: str
       {!open ? (
         <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)}>+ Add Problem</button>
       ) : (
-        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', marginTop: '8px' }}>
-          <h4 style={{ fontWeight: 700, marginBottom: '16px' }}>Problem #{currentCount + 1}</h4>
+        <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '32px', marginTop: '12px', boxShadow: 'var(--shadow)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '2px solid var(--bg-secondary)', paddingBottom: '16px' }}>
+            <h4 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)' }}>Problem #{currentCount + 1}</h4>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700 }}>NEW DRAFT</span>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '12px' }}>
               <div className="form-group">

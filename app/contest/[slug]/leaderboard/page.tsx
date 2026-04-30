@@ -127,18 +127,26 @@ export default function LeaderboardPage() {
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
       <nav className="navbar">
         <div className="navbar-brand">
-          <div className="logo-icon">⚡</div>
+          <div className="logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m13 2-2 10h8L11 22l2-10H5L13 2Z"/></svg>
+          </div>
           <span>{contest?.title || 'Leaderboard'}</span>
         </div>
         <div className="flex items-center gap-3">
           {isLive && (
-            <div className="flex items-center gap-2" style={{ background: 'var(--green-bg)', border: '1px solid var(--green)', borderRadius: 'var(--radius-sm)', padding: '5px 12px', fontSize: '13px', color: 'var(--green)', fontWeight: 700 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', display: 'inline-block', animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <div className="flex items-center gap-2" style={{ background: 'var(--green-bg)', border: '1px solid var(--green)', borderRadius: 'var(--radius-sm)', padding: '5px 12px', fontSize: '12px', color: 'var(--green)', fontWeight: 800 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
               LIVE
             </div>
           )}
-          <div className="timer" style={{ fontSize: '14px' }}>⏱ {timeLeft}</div>
-          <a href={`/contest/${slug}`} className="btn btn-ghost btn-sm">← Back</a>
+          <div className="timer" style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {timeLeft}
+          </div>
+          <a href={`/contest/${slug}`} className="btn btn-ghost btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="m15 18-6-6 6-6"/></svg>
+            Back
+          </a>
         </div>
       </nav>
 
@@ -146,13 +154,18 @@ export default function LeaderboardPage() {
 
       <div className="container" style={{ padding: '32px 24px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <h1 style={{ fontSize: '26px', fontWeight: 900, marginBottom: '4px' }}>🏆 Leaderboard</h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-              {entries.length} participant{entries.length !== 1 ? 's' : ''} • Last updated: {lastUpdated || '...'}
-              {isLive && ' • Auto-refreshing live'}
-            </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', flexWrap: 'wrap', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{ width: 56, height: 56, background: 'var(--bg-secondary)', borderRadius: '14px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            </div>
+            <div>
+              <h1 style={{ fontSize: '28px', fontWeight: 900, marginBottom: '4px' }}>Competition Leaderboard</h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Last updated: {lastUpdated || '...'} {isLive && ' • Real-time tracking enabled'}
+              </p>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '24px' }}>
             {entries.length > 0 && (
@@ -265,19 +278,26 @@ export default function LeaderboardPage() {
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(4px)' }} onClick={() => setSelectedSub(null)}>
             <div style={{ background: 'var(--bg-secondary)', width: '100%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto', borderRadius: '12px', border: '1px solid var(--border)', position: 'relative', boxShadow: '0 24px 48px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
               <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 10 }}>
-                <div>
-                  <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '24px' }}>🧑‍💻</span> {selectedSub.name}'s Last Submission
-                  </h2>
-                  {!selectedSub.loading && !selectedSub.not_found && (
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span>Problem: <strong style={{ color: 'var(--text-primary)' }}>{selectedSub.problemTitle}</strong></span>
-                      <span>Language: <strong style={{ color: 'var(--accent)', fontFamily: 'JetBrains Mono' }}>{selectedSub.language}</strong></span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Verdict: <span className={`badge badge-${selectedSub.verdict.toLowerCase()}`}>{selectedSub.verdict}</span></span>
-                    </div>
-                  )}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+                  <div style={{ width: 40, height: 40, background: 'var(--bg-primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0 }}>
+                      {selectedSub.name}'s Last Submission
+                    </h2>
+                    {!selectedSub.loading && !selectedSub.not_found && (
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span>Problem: <strong style={{ color: 'var(--text-primary)' }}>{selectedSub.problemTitle}</strong></span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Verdict: <span className={`badge badge-${selectedSub.verdict.toLowerCase()}`}>{selectedSub.verdict}</span></span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <button className="btn btn-ghost" onClick={() => setSelectedSub(null)}>✕ Close</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setSelectedSub(null)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  Close
+                </button>
               </div>
               <div style={{ padding: '24px' }}>
                 {selectedSub.loading ? (
@@ -299,6 +319,6 @@ export default function LeaderboardPage() {
           </div>
         )
       }
-    </div >
+    </div>
   );
 }

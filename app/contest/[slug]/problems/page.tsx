@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import { Problem, Contest, Language, LANGUAGE_CONFIG } from '@/lib/types';
@@ -201,6 +202,9 @@ export default function ProblemsPage() {
       {/* Navbar */}
       <nav className="navbar" style={{ flexShrink: 0 }}>
         <div className="navbar-brand">
+          <Link href="/" className="btn btn-ghost btn-sm" style={{ marginRight: '8px', padding: '6px 10px', minWidth: 'auto' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </Link>
           <div className="logo-icon">⚡</div>
           <span className="hide-mobile">{contest.title}</span>
         </div>
