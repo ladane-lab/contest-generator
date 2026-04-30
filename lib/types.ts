@@ -8,6 +8,7 @@ export interface Contest {
   start_time: string;
   end_time: string;
   is_active: boolean;
+  created_by: string;
   created_at: string;
 }
 

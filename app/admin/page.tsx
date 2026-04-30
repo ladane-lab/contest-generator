@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Contest, Problem } from '@/lib/types';
+import { Session } from '@supabase/supabase-js';
 
 interface TestCaseInput { input: string; expected_output: string; is_hidden: boolean; }
 interface ProblemInput {
@@ -20,31 +21,57 @@ const DEFAULT_PROBLEM: ProblemInput = {
 type Tab = 'contests' | 'create' | 'settings';
 
 export default function AdminPage() {
-  const [authed, setAuthed] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSignup, setIsSignup] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
   const [tab, setTab] = useState<Tab>('contests');
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && sessionStorage.getItem('isAdmin') === 'true') {
-      setAuthed(true);
-    }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  function handleLogin(e: React.FormEvent) {
+  async function handleAuth(e: React.FormEvent) {
     e.preventDefault();
-    const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'pccoe_admin_2025';
-    if (password === correctPassword) {
-      setAuthed(true);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('isAdmin', 'true');
-        localStorage.setItem('isAdmin', 'true');
+    setAuthLoading(true);
+    setAuthError('');
+    
+    try {
+      if (isSignup) {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        alert('Check your email for the confirmation link!');
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
       }
+    } catch (err: any) {
+      setAuthError(err.message || 'Authentication failed');
+    } finally {
+      setAuthLoading(false);
     }
-    else setAuthError('Invalid credentials. Please try again.');
   }
 
-  if (!authed) {
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    setTab('contests');
+  }
+
+  if (loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}><div className="spinner" /></div>;
+
+  if (!session) {
     return (
       <div className="hero bg-animate" style={{ padding: 0, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="floating-symbols">
@@ -56,27 +83,53 @@ export default function AdminPage() {
           <div className="symbol">{'const'}</div>
           <div className="symbol">{'f()'}</div>
         </div>
-        <div className="card glass-card" style={{ width: 380, textAlign: 'center', zIndex: 1, padding: '32px', background: 'rgba(255, 255, 255, 0.95)' }}>
-          <div style={{ width: 56, height: 56, background: 'var(--accent-glow)', color: 'var(--accent)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div className="card glass-card" style={{ width: 400, textAlign: 'center', zIndex: 1, padding: '40px', background: 'rgba(255, 255, 255, 0.98)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}>
+          <div style={{ width: 64, height: 64, background: 'var(--accent)', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: '0 8px 20px rgba(37, 99, 235, 0.3)' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '4px', color: 'var(--text-primary)' }}>Admin Portal</h1>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '13px' }}>Secure dashboard access.</p>
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: 900, marginBottom: '8px', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+            {isSignup ? 'Create Admin Account' : 'Admin Portal'}
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '14px' }}>
+            {isSignup ? 'Register to start managing contests.' : 'Secure access to your dashboard.'}
+          </p>
+          
+          <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div className="form-group" style={{ textAlign: 'left' }}>
-              <label className="form-label" style={{ fontSize: '12px', marginBottom: '4px' }}>Administrator Password</label>
+              <label className="form-label" style={{ fontSize: '12px' }}>Email Address</label>
               <input
-                type="password" className="input" placeholder="••••••••"
-                style={{ padding: '10px 14px' }}
-                value={password} onChange={e => { setPassword(e.target.value); setAuthError(''); }}
-                autoFocus required
+                type="email" className="input" placeholder="admin@example.com"
+                style={{ padding: '12px 16px' }}
+                value={email} onChange={e => setEmail(e.target.value)}
+                required
               />
             </div>
-            {authError && <p style={{ color: 'var(--red)', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>{authError}</p>}
-            <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: '4px' }}>
-              Access Dashboard
+            <div className="form-group" style={{ textAlign: 'left' }}>
+              <label className="form-label" style={{ fontSize: '12px' }}>Password</label>
+              <input
+                type="password" className="input" placeholder="••••••••"
+                style={{ padding: '12px 16px' }}
+                value={password} onChange={e => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            {authError && <div className="result-box error" style={{ padding: '10px', fontSize: '12px' }}>{authError}</div>}
+            
+            <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: '8px' }} disabled={authLoading}>
+              {authLoading ? 'Processing...' : (isSignup ? 'Sign Up' : 'Sign In')}
             </button>
           </form>
+          
+          <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--bg-secondary)' }}>
+            <button 
+              onClick={() => { setIsSignup(!isSignup); setAuthError(''); }}
+              style={{ background: 'none', border: 'none', color: 'var(--accent)', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
+            >
+              {isSignup ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
+            </button>
+          </div>
+          
           <a href="/" style={{ display: 'block', marginTop: '16px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>← Back to Home</a>
         </div>
       </div>
@@ -100,13 +153,13 @@ export default function AdminPage() {
             Settings
           </button>
           <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 8px' }} />
-          <a href="/" className="btn btn-ghost btn-sm">Exit</a>
+          <button onClick={handleLogout} className="btn btn-ghost btn-sm">Logout</button>
         </div>
       </nav>
 
       <div className="container" style={{ padding: '40px 24px' }}>
-        {tab === 'contests' && <ContestList onNew={() => setTab('create')} />}
-        {tab === 'create' && <CreateContest onCreated={() => setTab('contests')} />}
+        {tab === 'contests' && <ContestList session={session} onNew={() => setTab('create')} />}
+        {tab === 'create' && <CreateContest session={session} onCreated={() => setTab('contests')} />}
         {tab === 'settings' && <GlobalSettings />}
       </div>
     </div>
@@ -180,7 +233,7 @@ function GlobalSettings() {
   );
 }
 
-function ContestList({ onNew }: { onNew: () => void }) {
+function ContestList({ onNew, session }: { onNew: () => void; session: Session | null }) {
   const [contests, setContests] = useState<Contest[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -189,9 +242,10 @@ function ContestList({ onNew }: { onNew: () => void }) {
   const [problems, setProblems] = useState<Record<string, Problem[]>>({});
 
   useEffect(() => {
-    supabase.from('contests').select('*').order('created_at', { ascending: false })
+    if (!session) return;
+    supabase.from('contests').select('*').eq('created_by', session.user.id).order('created_at', { ascending: false })
       .then(({ data }) => { setContests(data || []); setLoading(false); });
-  }, []);
+  }, [session]);
 
   async function toggleExpand(id: string) {
     if (expandedId === id) { setExpandedId(null); return; }
@@ -390,7 +444,7 @@ function ContestList({ onNew }: { onNew: () => void }) {
   );
 }
 
-function CreateContest({ onCreated }: { onCreated: () => void }) {
+function CreateContest({ onCreated, session }: { onCreated: () => void; session: Session | null }) {
   const [form, setForm] = useState({ title: '', slug: '', description: '', start_time: '', end_time: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -417,7 +471,8 @@ function CreateContest({ onCreated }: { onCreated: () => void }) {
         ...form,
         start_time: toLocalISO(form.start_time),
         end_time: toLocalISO(form.end_time),
-        is_active: true
+        is_active: true,
+        created_by: session?.user.id
       };
 
       const { error: err } = await supabase.from('contests').insert(submitForm);
