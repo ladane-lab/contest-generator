@@ -262,17 +262,45 @@ function ContestList({ onNew, session }: { onNew: () => void; session: Session |
     setContests(c => c.filter(x => x.id !== id));
   }
 
+  // Convert a stored UTC/ISO timestamp to a datetime-local string (YYYY-MM-DDTHH:mm)
+  function toDatetimeLocal(isoStr: string): string {
+    const d = new Date(isoStr);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  // Convert a datetime-local string to an ISO string with local timezone offset
+  function toLocalISO(localStr: string): string {
+    const d = new Date(localStr);
+    const offset = d.getTimezoneOffset();
+    const sign = offset > 0 ? '-' : '+';
+    const absOffset = Math.abs(offset);
+    const hh = String(Math.floor(absOffset / 60)).padStart(2, '0');
+    const mm = String(absOffset % 60).padStart(2, '0');
+    return `${localStr}:00${sign}${hh}:${mm}`;
+  }
+
   async function startEditing(c: Contest) {
     setEditingId(c.id);
-    setEditForm({ title: c.title, start_time: c.start_time.split('.')[0], end_time: c.end_time.split('.')[0] });
+    setEditForm({
+      title: c.title,
+      start_time: toDatetimeLocal(c.start_time),
+      end_time: toDatetimeLocal(c.end_time),
+    });
   }
 
   async function saveEdit(id: string) {
-    const { error } = await supabase.from('contests').update(editForm).eq('id', id);
+    const payload = {
+      title: editForm.title,
+      start_time: toLocalISO(editForm.start_time),
+      end_time: toLocalISO(editForm.end_time),
+    };
+    const { error } = await supabase.from('contests').update(payload).eq('id', id);
     if (error) {
       alert('Failed to update contest: ' + error.message);
     } else {
-      setContests(contests.map(c => c.id === id ? { ...c, ...editForm } : c));
+      // Update local state with the correctly-typed ISO strings so UI refreshes without re-fetch
+      setContests(contests.map(c => c.id === id ? { ...c, ...payload } : c));
       setEditingId(null);
     }
   }
