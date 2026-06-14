@@ -576,3 +576,167 @@ a {
 .symbol:nth-child(5) { left: 65%; font-size: 28px; animation: float 28s linear infinite 8s; }
 .symbol:nth-child(6) { left: 80%; font-size: 36px; animation: float 24s linear infinite 3s; }
 .symbol:nth-child(7) { left: 90%; font-size: 20px; animation: float 19s linear infinite 6s; }
+
+/* ─── Anti-cheat Toast ─── */
+.anticheat-toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  z-index: 9999;
+  padding: 14px 28px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 700;
+  max-width: 540px;
+  width: calc(100% - 48px);
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  background: #fdf4ff;
+  border: 2px solid #a855f7;
+  color: #581c87;
+}
+.anticheat-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  20%      { transform: translateX(calc(-50% - 8px)) translateY(0); }
+  40%      { transform: translateX(calc(-50% + 8px)) translateY(0); }
+  60%      { transform: translateX(calc(-50% - 6px)) translateY(0); }
+  80%      { transform: translateX(calc(-50% + 4px)) translateY(0); }
+}
+
+/* ─── Anti-cheat Modal Overlay ─── */
+.anticheat-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeInOverlay 0.2s ease;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.anticheat-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+  text-align: center;
+  animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.anticheat-modal-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin: 0 auto 20px;
+}
+.anticheat-modal-icon.warn    { background: #fffbeb; border: 2px solid #f59e0b; }
+.anticheat-modal-icon.flagged { background: var(--red-bg); border: 2px solid var(--red); animation: pulse-red 1s infinite; }
+
+@keyframes pulse-red {
+  0%,100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+  50%     { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+}
+
+.anticheat-modal-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+
+.anticheat-modal-body {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.anticheat-modal-stats {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.anticheat-stat {
+  flex: 1;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.anticheat-stat-val {
+  font-size: 24px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-primary);
+}
+
+.anticheat-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+/* ─── Timer danger pulse ─── */
+.timer.danger {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red);
+  animation: timerPulse 1s ease infinite;
+}
+
+@keyframes timerPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.3); }
+  50%     { box-shadow: 0 0 0 6px rgba(220,38,38,0); }
+}
+
+/* ─── btn-danger ─── */
+.btn-danger {
+  background: var(--red);
+  color: white;
+  border: none;
+}
+.btn-danger:hover {
+  background: #b91c1c;
+}
